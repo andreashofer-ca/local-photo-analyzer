@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "local-photo-analyzer"
-version = "0.1.0"
-description = "Secure local LLM-based photo analyzer that organizes, renames, and tags photos using AI while maintaining complete privacy"
-authors = ["Austin Orphan <austin@example.com>"]
+name = "local-media-analyzer"
+version = "0.2.0"
+description = "Secure local LLM-based media analyzer that organizes, renames, and tags photos, videos, and audio files using AI while maintaining complete privacy"
+authors = ["Andreas Hofer <andreashofer-ca@users.noreply.github.com>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/AustinOrphan/local-photo-analyzer"
-repository = "https://github.com/AustinOrphan/local-photo-analyzer"
-keywords = ["photo", "ai", "local", "privacy", "organization", "llm", "computer-vision"]
+homepage = "https://github.com/andreashofer-ca/local-photo-analyzer"
+repository = "https://github.com/andreashofer-ca/local-photo-analyzer"
+keywords = ["photo", "video", "audio", "media", "ai", "local", "privacy", "organization", "llm", "computer-vision"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: End Users/Desktop",
@@ -54,6 +54,7 @@ appdirs = "^1.4.4"
 toml = "^0.10.2"
 pyyaml = "^6.0.1"
 colorlog = "^6.8.0"
+mutagen = "^1.47"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
@@ -72,6 +73,7 @@ httpx = "^0.25.2"
 pytest-xdist = "^3.5.0"
 
 [tool.poetry.scripts]
+media-analyzer = "photo_analyzer.cli:main"
 photo-analyzer = "photo_analyzer.cli:main"
 
 [build-system]

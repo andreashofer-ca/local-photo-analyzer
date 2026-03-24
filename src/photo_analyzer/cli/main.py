@@ -19,7 +19,9 @@ from ..pipeline.analyzer import PhotoAnalyzer
 from ..pipeline.processor import PhotoProcessor
 from ..pipeline.organizer import PhotoOrganizer
 from ..pipeline.video_analyzer import VideoAnalyzer
+from ..pipeline.audio_analyzer import AudioAnalyzer
 from ..utils.video import VIDEO_EXTENSIONS
+from ..utils.audio import AUDIO_EXTENSIONS
 
 console = Console()
 logger = get_logger(__name__)
@@ -30,7 +32,7 @@ logger = get_logger(__name__)
 @click.option('--config-file', type=click.Path(exists=True), help='Path to configuration file')
 @click.pass_context
 def main(ctx: click.Context, debug: bool, config_file: Optional[str]):
-    """Photo Analyzer CLI - Secure local LLM-based photo analysis and organization."""
+    """Local Media Analyzer CLI - AI-powered analysis and organization for photos, videos, and audio."""
     # Setup logging
     log_level = "DEBUG" if debug else "INFO"
     setup_logging(log_level)
@@ -103,13 +105,17 @@ def analyze(ctx: click.Context, paths: tuple, batch_size: int, output_format: st
 
     image_files = []
     video_files = []
+    audio_files = []
     image_exts = ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif', '.webp', '.heic', '.raw']
 
     for path_str in paths:
         path = Path(path_str)
         if path.is_file():
-            if path.suffix.lower() in VIDEO_EXTENSIONS:
+            ext = path.suffix.lower()
+            if ext in VIDEO_EXTENSIONS:
                 video_files.append(path)
+            elif ext in AUDIO_EXTENSIONS:
+                audio_files.append(path)
             else:
                 image_files.append(path)
         elif path.is_dir():
@@ -119,14 +125,18 @@ def analyze(ctx: click.Context, paths: tuple, batch_size: int, output_format: st
             for ext in VIDEO_EXTENSIONS:
                 video_files.extend(path.rglob(f'*{ext}'))
                 video_files.extend(path.rglob(f'*{ext.upper()}'))
+            for ext in AUDIO_EXTENSIONS:
+                audio_files.extend(path.rglob(f'*{ext}'))
+                audio_files.extend(path.rglob(f'*{ext.upper()}'))
 
-    total = len(image_files) + len(video_files)
+    total = len(image_files) + len(video_files) + len(audio_files)
     if total == 0:
         console.print("[yellow]No media files found in specified paths[/yellow]")
         return
 
     console.print(
-        f"[blue]Found {len(image_files)} image(s) and {len(video_files)} video(s) to analyze[/blue]"
+        f"[blue]Found {len(image_files)} image(s), {len(video_files)} video(s), "
+        f"and {len(audio_files)} audio file(s) to analyze[/blue]"
     )
 
     async def analyze_media():
@@ -175,6 +185,23 @@ def analyze(ctx: click.Context, paths: tuple, batch_size: int, output_format: st
                 except Exception as e:
                     console.print(f"[red]Video analysis failed: {e}[/red]")
 
+            if audio_files:
+                audio_analyzer = AudioAnalyzer(config)
+                aud_task = progress.add_task("Analyzing audio...", total=len(audio_files))
+
+                def aud_progress(completed: int, total: int):
+                    progress.update(aud_task, completed=completed)
+
+                try:
+                    aud_results = await audio_analyzer.analyze_batch(
+                        audio_files,
+                        batch_size=batch_size,
+                        progress_callback=aud_progress,
+                    )
+                    all_results.extend(aud_results)
+                except Exception as e:
+                    console.print(f"[red]Audio analysis failed: {e}[/red]")
+
         if output_format == 'table':
             display_analysis_table(all_results)
         else:
@@ -199,7 +226,7 @@ def organize(ctx: click.Context, paths: tuple, output_dir: str, date_format: str
     config = ctx.obj['config']
     output_path = Path(output_dir)
     
-    # Collect photos and videos to organize
+    # Collect photos, videos, and audio files to organize
     photo_paths = []
     image_exts = ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif', '.webp', '.heic', '.raw']
     for path_str in paths:
@@ -211,6 +238,9 @@ def organize(ctx: click.Context, paths: tuple, output_dir: str, date_format: str
                 photo_paths.extend(path.rglob(f'*{ext}'))
                 photo_paths.extend(path.rglob(f'*{ext.upper()}'))
             for ext in VIDEO_EXTENSIONS:
+                photo_paths.extend(path.rglob(f'*{ext}'))
+                photo_paths.extend(path.rglob(f'*{ext.upper()}'))
+            for ext in AUDIO_EXTENSIONS:
                 photo_paths.extend(path.rglob(f'*{ext}'))
                 photo_paths.extend(path.rglob(f'*{ext.upper()}'))
 

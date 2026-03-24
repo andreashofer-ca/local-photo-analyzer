@@ -17,12 +17,12 @@ version: "3.9"
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
-  photo-analyzer:
+  media-analyzer:
     build:
       context: .
       dockerfile: Dockerfile
-    image: photo-analyzer:latest
-    container_name: photo-analyzer
+    image: local-media-analyzer:latest
+    container_name: local-media-analyzer
 
     # ── Ports ────────────────────────────────────────────────────────────────
     ports:
@@ -31,11 +31,11 @@ services:
     # ── Volumes ──────────────────────────────────────────────────────────────
     volumes:
       # Application data (SQLite database, logs, thumbnails)
-      - photo_analyzer_data:/data
+      - media_analyzer_data:/data
       # Persistent config directory
-      - photo_analyzer_config:/config
+      - media_analyzer_config:/config
       # Shared cache / temp frames
-      - photo_analyzer_cache:/cache
+      - media_analyzer_cache:/cache
       # ▼ Mount your photo/video library (read-only for safety)
       # Change MEDIA_DIR in your .env file or set it here directly.
       - "${MEDIA_DIR:-./sample_media}:/media:ro"
@@ -70,6 +70,6 @@ services:
 
 # ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
-  photo_analyzer_data:
-  photo_analyzer_config:
-  photo_analyzer_cache:
+  media_analyzer_data:
+  media_analyzer_config:
+  media_analyzer_cache:

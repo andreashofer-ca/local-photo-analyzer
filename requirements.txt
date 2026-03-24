@@ -1,4 +1,4 @@
-# Production dependencies for Local Photo Analyzer
+# Production dependencies for Local Media Analyzer
 # For development dependencies, use: pip install -r requirements-dev.txt
 
 click>=8.1.7
@@ -29,3 +29,4 @@ appdirs>=1.4.4
 toml>=0.10.2
 pyyaml>=6.0.1
 colorlog>=6.8.0
+mutagen>=1.47

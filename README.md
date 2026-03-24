@@ -1,12 +1,12 @@
-# 📸 Local Photo Analyzer
+# 🎬 Local Media Analyzer
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Development Status](https://img.shields.io/badge/status-alpha-red.svg)](https://github.com/AustinOrphan/local-photo-analyzer)
+[![Development Status](https://img.shields.io/badge/status-alpha-red.svg)](https://github.com/andreashofer-ca/local-photo-analyzer)
 
-> **🔒 Privacy-First Photo Organization with Local AI**
+> **🔒 Privacy-First Media Organization with Local AI**
 > 
-> Intelligently analyze, rename, tag, and organize your photos using local LLM models while maintaining complete privacy. No cloud uploads, no data sharing, just smart local photo management.
+> Intelligently analyze, rename, tag, and organize your **photos, videos, and audio files** using local LLM models while maintaining complete privacy. No cloud uploads, no data sharing, just smart local media management.
 
 ## ✨ Features
 

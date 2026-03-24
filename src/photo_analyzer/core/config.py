@@ -48,6 +48,11 @@ class OrganizationConfig(BaseModel):
                  ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".ts"],
         description="Allowed video file extensions"
     )
+    allowed_audio_extensions: List[str] = Field(
+        default=[".mp3", ".flac", ".wav", ".aac", ".ogg", ".m4a",
+                 ".wma", ".opus", ".aiff", ".aif", ".alac"],
+        description="Allowed audio file extensions"
+    )
 
 
 class AnalysisConfig(BaseModel):
@@ -90,7 +95,7 @@ class Config(BaseSettings):
     """Main configuration class."""
     
     # Application settings
-    app_name: str = Field(default="Photo Analyzer", description="Application name")
+    app_name: str = Field(default="Local Media Analyzer", description="Application name")
     version: str = Field(default="0.1.0", description="Application version")
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level")

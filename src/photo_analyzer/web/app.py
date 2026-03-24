@@ -54,9 +54,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Photo Analyzer",
-    description="Secure local LLM-based photo analyzer with intelligent organization",
-    version="0.1.0",
+    title="Local Media Analyzer",
+    description="Secure local LLM-based media analyzer for photos, videos, and audio",
+    version="0.2.0",
     lifespan=lifespan
 )
 
