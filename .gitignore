@@ -198,6 +198,17 @@ ollama_cache/
 ehthumbs.db
 Thumbs.db
 
+# Node / Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+
+# Sample media directory (local test files)
+sample_media/
+
+# VS Code Copilot / agent config
+.claude/
+
 # Backup files
 *.bak
 *.backup
