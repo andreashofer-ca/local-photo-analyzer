@@ -1,0 +1,45 @@
+# Git / version control
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.py[cod]
+*.egg-info
+*.egg
+.eggs/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv
+venv
+env
+
+# IDE / editor config
+.vscode
+.idea
+*.swp
+
+# Node / frontend build artefacts
+frontend/node_modules
+frontend/build
+
+# Test output
+.coverage
+htmlcov/
+
+# Local dev data and logs (only mount these via volumes at runtime)
+data/
+logs/
+*.db
+*.sqlite
+
+# Temp frame extraction directories
+photo_analyzer_video_*
+
+# macOS metadata
+.DS_Store

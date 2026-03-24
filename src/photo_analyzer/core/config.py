@@ -43,6 +43,11 @@ class OrganizationConfig(BaseModel):
         default=[".jpg", ".jpeg", ".png", ".tiff", ".bmp", ".gif", ".webp", ".heic", ".raw"],
         description="Allowed image file extensions"
     )
+    allowed_video_extensions: List[str] = Field(
+        default=[".mp4", ".mov", ".avi", ".mkv", ".m4v", ".wmv",
+                 ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".ts"],
+        description="Allowed video file extensions"
+    )
 
 
 class AnalysisConfig(BaseModel):
@@ -55,6 +60,10 @@ class AnalysisConfig(BaseModel):
     enable_scene_analysis: bool = Field(default=True, description="Enable scene analysis")
     batch_size: int = Field(default=10, description="Batch processing size")
     enable_gpu: bool = Field(default=True, description="Use GPU if available")
+    video_frames_to_extract: int = Field(
+        default=5,
+        description="Number of evenly-spaced key frames to extract per video for LLM analysis"
+    )
 
 
 class SecurityConfig(BaseModel):

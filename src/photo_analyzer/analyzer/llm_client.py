@@ -40,7 +40,12 @@ class OllamaClient:
         except Exception as e:
             logger.error(f"Failed to connect to Ollama: {e}")
             return False
-    
+
+    # Alias used by the pipeline and CLI
+    async def health_check(self) -> bool:
+        """Alias for check_connection() for backwards compatibility."""
+        return await self.check_connection()
+
     async def list_models(self) -> List[Dict[str, Any]]:
         """List available models."""
         try:

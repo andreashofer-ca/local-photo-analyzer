@@ -1,0 +1,75 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Local Photo & Video Analyzer — Docker Compose
+#
+# Prerequisites:
+#   • Ollama is running on the HOST Mac (ollama serve)
+#   • Docker Desktop is running with "Use host networking for localhost" enabled
+#     (or leave the default — host.docker.internal works automatically on macOS)
+#
+# Quick start:
+#   docker compose up --build
+#
+# Mount your SSD:
+#   Set MEDIA_DIR to the path of your external SSD in a .env file, e.g.
+#     MEDIA_DIR=/Volumes/MySSD
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  photo-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: photo-analyzer:latest
+    container_name: photo-analyzer
+
+    # ── Ports ────────────────────────────────────────────────────────────────
+    ports:
+      - "8080:8080"          # Web UI / REST API
+
+    # ── Volumes ──────────────────────────────────────────────────────────────
+    volumes:
+      # Application data (SQLite database, logs, thumbnails)
+      - photo_analyzer_data:/data
+      # Persistent config directory
+      - photo_analyzer_config:/config
+      # Shared cache / temp frames
+      - photo_analyzer_cache:/cache
+      # ▼ Mount your photo/video library (read-only for safety)
+      # Change MEDIA_DIR in your .env file or set it here directly.
+      - "${MEDIA_DIR:-./sample_media}:/media:ro"
+
+    # ── Environment overrides ─────────────────────────────────────────────────
+    environment:
+      # Point to Ollama on the host
+      PHOTO_ANALYZER_LLM__OLLAMA_URL: "http://host.docker.internal:11434"
+      # Number of key frames extracted per video (override as needed)
+      PHOTO_ANALYZER_ANALYSIS__VIDEO_FRAMES_TO_EXTRACT: "${VIDEO_FRAMES:-5}"
+      # Primary vision model
+      PHOTO_ANALYZER_LLM__PRIMARY_MODEL: "${OLLAMA_MODEL:-llava}"
+
+    # Ensure the container can reach the host's Ollama on Linux as well
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    restart: unless-stopped
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx,sys;r=httpx.get('http://localhost:8080/health',timeout=5);sys.exit(0 if r.status_code==200 else 1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  photo_analyzer_data:
+  photo_analyzer_config:
+  photo_analyzer_cache:

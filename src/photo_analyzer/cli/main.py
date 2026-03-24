@@ -18,6 +18,8 @@ from ..database.migrations import get_migration_manager
 from ..pipeline.analyzer import PhotoAnalyzer
 from ..pipeline.processor import PhotoProcessor
 from ..pipeline.organizer import PhotoOrganizer
+from ..pipeline.video_analyzer import VideoAnalyzer
+from ..utils.video import VIDEO_EXTENSIONS
 
 console = Console()
 logger = get_logger(__name__)
@@ -96,64 +98,90 @@ def init(ctx: click.Context, database_type: str, database_path: Optional[str], r
 @click.option('--output-format', type=click.Choice(['json', 'table']), default='table')
 @click.pass_context
 def analyze(ctx: click.Context, paths: tuple, batch_size: int, output_format: str):
-    """Analyze photos using local LLM."""
+    """Analyze photos and videos using local LLM."""
     config = ctx.obj['config']
-    
-    # Collect all image files
+
     image_files = []
+    video_files = []
+    image_exts = ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif', '.webp', '.heic', '.raw']
+
     for path_str in paths:
         path = Path(path_str)
         if path.is_file():
-            image_files.append(path)
+            if path.suffix.lower() in VIDEO_EXTENSIONS:
+                video_files.append(path)
+            else:
+                image_files.append(path)
         elif path.is_dir():
-            # Find image files in directory
-            for ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif']:
+            for ext in image_exts:
                 image_files.extend(path.rglob(f'*{ext}'))
                 image_files.extend(path.rglob(f'*{ext.upper()}'))
-    
-    if not image_files:
-        console.print("[yellow]No image files found in specified paths[/yellow]")
+            for ext in VIDEO_EXTENSIONS:
+                video_files.extend(path.rglob(f'*{ext}'))
+                video_files.extend(path.rglob(f'*{ext.upper()}'))
+
+    total = len(image_files) + len(video_files)
+    if total == 0:
+        console.print("[yellow]No media files found in specified paths[/yellow]")
         return
-    
-    console.print(f"[blue]Found {len(image_files)} image files to analyze[/blue]")
-    
-    async def analyze_photos():
-        analyzer = PhotoAnalyzer(config)
-        results = []
-        
+
+    console.print(
+        f"[blue]Found {len(image_files)} image(s) and {len(video_files)} video(s) to analyze[/blue]"
+    )
+
+    async def analyze_media():
+        all_results = []
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
-            console=console
+            console=console,
         ) as progress:
-            
-            task = progress.add_task("Analyzing photos...", total=len(image_files))
-            
-            def update_progress(completed: int, total: int):
-                progress.update(task, completed=completed)
-            
-            try:
-                results = await analyzer.analyze_batch(
-                    image_files, 
-                    batch_size=batch_size,
-                    progress_callback=update_progress
-                )
-            except Exception as e:
-                console.print(f"[red]Analysis failed: {e}[/red]")
-                return
-        
-        # Display results
+
+            if image_files:
+                analyzer = PhotoAnalyzer(config)
+                img_task = progress.add_task("Analyzing images...", total=len(image_files))
+
+                def img_progress(completed: int, total: int):
+                    progress.update(img_task, completed=completed)
+
+                try:
+                    img_results = await analyzer.analyze_batch(
+                        image_files,
+                        batch_size=batch_size,
+                        progress_callback=img_progress,
+                    )
+                    all_results.extend(img_results)
+                except Exception as e:
+                    console.print(f"[red]Image analysis failed: {e}[/red]")
+
+            if video_files:
+                video_analyzer = VideoAnalyzer(config)
+                vid_task = progress.add_task("Analyzing videos...", total=len(video_files))
+
+                def vid_progress(completed: int, total: int):
+                    progress.update(vid_task, completed=completed)
+
+                try:
+                    vid_results = await video_analyzer.analyze_batch(
+                        video_files,
+                        batch_size=batch_size,
+                        progress_callback=vid_progress,
+                    )
+                    all_results.extend(vid_results)
+                except Exception as e:
+                    console.print(f"[red]Video analysis failed: {e}[/red]")
+
         if output_format == 'table':
-            display_analysis_table(results)
+            display_analysis_table(all_results)
         else:
             import json
-            console.print(json.dumps(results, indent=2, default=str))
-    
-    # Run analysis
-    asyncio.run(analyze_photos())
+            console.print(json.dumps(all_results, indent=2, default=str))
+
+    asyncio.run(analyze_media())
 
 
 @main.command()
@@ -171,19 +199,23 @@ def organize(ctx: click.Context, paths: tuple, output_dir: str, date_format: str
     config = ctx.obj['config']
     output_path = Path(output_dir)
     
-    # Collect photos to organize
+    # Collect photos and videos to organize
     photo_paths = []
+    image_exts = ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif', '.webp', '.heic', '.raw']
     for path_str in paths:
         path = Path(path_str)
         if path.is_file():
             photo_paths.append(path)
         elif path.is_dir():
-            for ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif']:
+            for ext in image_exts:
                 photo_paths.extend(path.rglob(f'*{ext}'))
                 photo_paths.extend(path.rglob(f'*{ext.upper()}'))
-    
+            for ext in VIDEO_EXTENSIONS:
+                photo_paths.extend(path.rglob(f'*{ext}'))
+                photo_paths.extend(path.rglob(f'*{ext.upper()}'))
+
     if not photo_paths:
-        console.print("[yellow]No photos found to organize[/yellow]")
+        console.print("[yellow]No media files found to organize[/yellow]")
         return
     
     organization_rules = {
